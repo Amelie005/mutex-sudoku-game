@@ -1,0 +1,8 @@
+network/Discovery.class
+Main.class
+game/PuzzleGenerator.class
+game/Board.class
+protocol/Message.class
+coordination/Resolver.class
+game/GameState.class
+game/Validator.class
