@@ -63,14 +63,17 @@ final class SudokuSolver {
     private static int count(int[] g, int limit) {
         int best = -1;
         List<Integer> bestCands = null;
+
         for (int i = 0; i < 81; i++) {
-            if (g[i] != 0) {
+            if (g[i] != 0) { //no empty fields
                 continue;
             }
+
             List<Integer> cands = candidates(g, i);
             if (cands.isEmpty()) {
                 return 0;
             }
+
             if (bestCands == null || cands.size() < bestCands.size()) {
                 best = i;
                 bestCands = cands;
@@ -126,7 +129,7 @@ final class SudokuSolver {
             }
         }
         if (bestCands == null) {
-            return true; // Brett voll
+            return true; //board is full
         }
         for (int n : bestCands) {
             g[best] = n;
