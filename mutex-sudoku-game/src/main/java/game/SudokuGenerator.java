@@ -58,26 +58,18 @@ final class SudokuGenerator {
      */
     private static boolean fill(int[] g, Random rand) {
         int idx = -1;
-
         for (int i = 0; i < 81; i++) {
-            if (g[i] == 0) { //if cell is empty
+            if (g[i] == 0) {
                 idx = i;
                 break;
             }
         }
-        if (idx == -1) { //if no empty cell is found
+        if (idx == -1) {
             return true;
         }
-        List<Integer> nums = new ArrayList<>();
-        for (int n = 1; n <= 9; n++) { //add possible numbers
-            nums.add(n);
-        }
-        Collections.shuffle(nums, rand);
-        int mask = SudokuSolver.candidates(g, idx); //TODO: implement!
-        for (int n : nums) {
-            if ((mask & (1 << n)) == 0) { //make sure the number is valid
-                continue;
-            }
+        List<Integer> cands = SudokuSolver.candidates(g, idx);
+        Collections.shuffle(cands, rand);
+        for (int n : cands) {
             g[idx] = n;
             if (fill(g, rand)) {
                 return true;
