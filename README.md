@@ -35,6 +35,4 @@ Keep in mind, that the 3-mistake rule applies here too.
 
 ## Sources & references
 References explaining several aspects of the implementation:
-- [Mask (computing)](https://en.wikipedia.org/wiki/Mask_(computing))
 - [Backtracking](https://en.wikipedia.org/wiki/Backtracking)
-- [Bitwise operators](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op3.html)
