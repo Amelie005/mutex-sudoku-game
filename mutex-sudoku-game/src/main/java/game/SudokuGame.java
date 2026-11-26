@@ -6,7 +6,7 @@ import java.util.Arrays;
  * Represents the sudoku game of one player (numbers, notes, mistakes, status).
  * Each peer gets their own instance.
  */
-public final class SudokuGame {
+public final class SudokuGame { //TODO: Thread sicherer machen?
 
     public static final int MAX_MISTAKES = 3;
 

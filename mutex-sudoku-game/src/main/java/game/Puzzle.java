@@ -41,7 +41,7 @@ public final class Puzzle {
      * @param s the string representation of the puzzle
      * @return the from String s decoded puzzle
      */
-    public static Puzzle decodePuzzle (String s) {
+    public static Puzzle decodePuzzle (String s) { //TODO: aktzeptiert noch ungültige Rätsel: validation-Logik einbauen
         if (s == null || s.length() != 81) {
             throw new IllegalArgumentException("81 symbols expected in String s!");
         }
