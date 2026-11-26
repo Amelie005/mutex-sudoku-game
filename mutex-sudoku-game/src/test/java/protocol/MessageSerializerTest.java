@@ -22,7 +22,10 @@ class MessageSerializerTest {
                 // Größter long-Wert, weil JSON-Zahlen sonst leicht Genauigkeit verlieren
                 new Message.JoinAck("host", Long.MAX_VALUE, Difficulty.HARD),
                 new Message.PlayerFinished("gast", 1_764_000_000_000L),
-                new Message.PlayerLost("gast"));
+                new Message.PlayerLost("gast"),
+                new Message.GameOver("gast"),
+                // Kein Gewinner, weil alle verloren haben
+                new Message.GameOver(null));
     }
 
     @ParameterizedTest
@@ -42,7 +45,8 @@ class MessageSerializerTest {
 
     @Test
     void everyMessageTypeIsCovered() {
-        assertEquals(MessageType.values().length, allMessageTypes().count());
+        long distinctTypes = allMessageTypes().map(Object::getClass).distinct().count();
+        assertEquals(MessageType.values().length, distinctTypes);
     }
 
     @ParameterizedTest

@@ -8,5 +8,6 @@ public enum MessageType {
     JOIN_REQUEST,
     JOIN_ACK,
     PLAYER_FINISHED,
-    PLAYER_LOST
+    PLAYER_LOST,
+    GAME_OVER
 }

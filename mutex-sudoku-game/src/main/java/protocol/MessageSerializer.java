@@ -43,6 +43,7 @@ public final class MessageSerializer {
                 case JOIN_ACK -> GSON.fromJson(obj, Message.JoinAck.class);
                 case PLAYER_FINISHED -> GSON.fromJson(obj, Message.PlayerFinished.class);
                 case PLAYER_LOST -> GSON.fromJson(obj, Message.PlayerLost.class);
+                case GAME_OVER -> GSON.fromJson(obj, Message.GameOver.class);
             };
         } catch (RuntimeException e) {
             // Die Daten kommen ungeprüft von fremden Peers: Der Aufrufer soll nur einen Fehlerfall abfangen müssen
@@ -57,6 +58,7 @@ public final class MessageSerializer {
             case Message.JoinAck m -> MessageType.JOIN_ACK;
             case Message.PlayerFinished m -> MessageType.PLAYER_FINISHED;
             case Message.PlayerLost m -> MessageType.PLAYER_LOST;
+            case Message.GameOver m -> MessageType.GAME_OVER;
         };
     }
 }

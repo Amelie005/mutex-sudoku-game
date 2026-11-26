@@ -18,4 +18,7 @@ public sealed interface Message {
 
     // Keine Zahlen oder Züge, weil jeder auf seinem eigenen Board spielt und die anderen nichts sehen sollen
     record PlayerLost(String peerId) implements Message {}
+
+    // Nur der Host verschickt das Ergebnis, damit alle denselben Gewinner anzeigen; null heißt, alle haben verloren
+    record GameOver(String winnerId) implements Message {}
 }
