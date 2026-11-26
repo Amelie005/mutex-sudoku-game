@@ -40,8 +40,10 @@ public final class Puzzle {
      * to using {@link #generatePuzzle}.
      * @param s the string representation of the puzzle
      * @return the from String s decoded puzzle
+     * @throws IllegalArgumentException if s is null, has the wrong length or invalid characters,
+     *         if the givens contradict each other or if the puzzle has no unique solution
      */
-    public static Puzzle decodePuzzle (String s) { //TODO: aktzeptiert noch ungültige Rätsel: validation-Logik einbauen
+    public static Puzzle decodePuzzle (String s) {
         if (s == null || s.length() != 81) {
             throw new IllegalArgumentException("81 symbols expected in String s!");
         }
@@ -50,12 +52,18 @@ public final class Puzzle {
 
         for (int i = 0; i < 81; i++) {
             char ch = s.charAt(i);
-            g[i] = (ch == '.') ? 0 : Character.digit(ch, 10);
-            if (g[i] < 0) {
+            if (ch == '.') {
+                g[i] = 0;
+            } else if (ch >= '0' && ch <= '9') { //ASCII only, Character.digit would also accept other scripts
+                g[i] = ch - '0';
+            } else {
                 throw new IllegalArgumentException("Invalid character at position " + i);
             }
         }
 
+        if (SudokuSolver.hasConflicts(g)) {
+            throw new IllegalArgumentException("Givens contradict each other (duplicate digit in a row, column or block).");
+        }
         if (SudokuSolver.countSolutions(g, 2) != 1) {
             throw new IllegalArgumentException("Puzzle has no unique solution and is therefore invalid.");
         }
