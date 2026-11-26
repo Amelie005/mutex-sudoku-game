@@ -47,7 +47,7 @@ public final class MessageSerializer {
             };
         } catch (RuntimeException e) {
             // The data comes unchecked from other peers: the caller should only have to handle one kind of error
-            throw new IllegalArgumentException("Ungültige Nachricht: " + json, e);
+            throw new IllegalArgumentException("Invalid message: " + json, e);
         }
     }
 

@@ -53,7 +53,7 @@ public class PeerServer {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            log.warn("Server-Socket konnte nicht geschlossen werden", e);
+            log.warn("Could not close server socket", e);
         }
     }
 
@@ -69,7 +69,7 @@ public class PeerServer {
         } catch (IOException e) {
             // After our own close() the interruption is intended and not an error
             if (!serverSocket.isClosed()) {
-                log.error("Server nimmt keine Verbindungen mehr an", e);
+                log.error("Server stopped accepting connections", e);
             }
         }
     }
@@ -77,9 +77,9 @@ public class PeerServer {
     private void handshake(Socket socket) {
         try {
             String peerId = peerManager.addIncomingConnection(new PeerConnection(socket));
-            log.info("Peer {} verbunden von {}", peerId, socket.getRemoteSocketAddress());
+            log.info("Peer {} connected from {}", peerId, socket.getRemoteSocketAddress());
         } catch (IOException e) {
-            log.warn("Verbindung von {} abgelehnt", socket.getRemoteSocketAddress(), e);
+            log.warn("Rejected connection from {}", socket.getRemoteSocketAddress(), e);
             closeQuietly(socket);
         }
     }
@@ -89,7 +89,7 @@ public class PeerServer {
         try {
             socket.close();
         } catch (IOException e) {
-            log.debug("Socket konnte nicht geschlossen werden", e);
+            log.debug("Could not close socket", e);
         }
     }
 }

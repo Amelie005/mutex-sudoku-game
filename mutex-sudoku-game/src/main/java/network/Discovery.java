@@ -132,7 +132,7 @@ public class Discovery {
             } catch (IOException e) {
                 // Short Wi-Fi dropouts should not end the announcement for good
                 if (!socket.isClosed()) {
-                    log.warn("Ankündigung konnte nicht gesendet werden", e);
+                    log.warn("Could not send announcement", e);
                     sleepQuietly();
                 }
             } catch (InterruptedException e) {
@@ -149,12 +149,12 @@ public class Discovery {
             // Drop packets from other programs or with missing fields
             if (a == null || !GAME_ID.equals(a.game()) || a.peerId() == null || a.peerId().isBlank()
                     || a.port() < 1 || a.port() > 65535) {
-                log.debug("Fremdes Paket ignoriert: {}", text);
+                log.debug("Ignored foreign packet: {}", text);
                 return null;
             }
             return new GameInfo(a.peerId(), packet.getAddress().getHostAddress(), a.port());
         } catch (RuntimeException e) {
-            log.debug("Ungültiges Paket ignoriert: {}", text, e);
+            log.debug("Ignored invalid packet: {}", text, e);
             return null;
         }
     }

@@ -24,7 +24,7 @@ public class Resolver {
      */
     public Resolver(Collection<String> playerIds) {
         if (playerIds.isEmpty()) {
-            throw new IllegalArgumentException("Ein Spiel braucht mindestens einen Spieler");
+            throw new IllegalArgumentException("A game needs at least one player");
         }
         this.players = Set.copyOf(playerIds);
     }

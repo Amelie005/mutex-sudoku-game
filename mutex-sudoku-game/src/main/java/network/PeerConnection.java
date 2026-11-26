@@ -67,7 +67,7 @@ public class PeerConnection {
         try {
             String line = reader.readLine();
             if (line == null) {
-                throw new EOFException("Verbindung wurde vom Peer beendet");
+                throw new EOFException("Connection closed by peer");
             }
             return MessageSerializer.deserialize(line);
         } finally {
@@ -104,7 +104,7 @@ public class PeerConnection {
         try {
             socket.close();
         } catch (IOException e) {
-            log.warn("Socket konnte nicht geschlossen werden", e);
+            log.warn("Could not close socket", e);
         }
     }
 
@@ -116,13 +116,13 @@ public class PeerConnection {
                     onMessage.accept(MessageSerializer.deserialize(line));
                 } catch (RuntimeException e) {
                     // One broken message should not end the whole connection
-                    log.warn("Nachricht verworfen: {}", line, e);
+                    log.warn("Dropped invalid message: {}", line, e);
                 }
             }
         } catch (IOException e) {
             // After our own close() the interruption is intended and not an error
             if (!socket.isClosed()) {
-                log.warn("Verbindung zu {} abgebrochen", socket.getRemoteSocketAddress(), e);
+                log.warn("Connection to {} lost", socket.getRemoteSocketAddress(), e);
             }
         } finally {
             close();

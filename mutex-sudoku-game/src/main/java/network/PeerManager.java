@@ -29,7 +29,7 @@ public class PeerManager {
 
     // Volatile, because the callback is set from a different thread than the listeners read it from
     private volatile Consumer<Message> onMessageReceived =
-            message -> log.debug("Kein Callback gesetzt, Nachricht verworfen: {}", message);
+            message -> log.debug("No callback set, dropped message: {}", message);
 
     /**
      * Registers a peer and starts receiving its messages.
@@ -106,7 +106,7 @@ public class PeerManager {
     public void sendTo(String peerId, Message message) {
         PeerConnection connection = connections.get(peerId);
         if (connection == null) {
-            log.warn("Peer {} ist nicht verbunden, Nachricht verworfen: {}", peerId, message);
+            log.warn("Peer {} is not connected, dropped message: {}", peerId, message);
             return;
         }
         send(peerId, connection, message);
@@ -154,10 +154,10 @@ public class PeerManager {
                     return message;
                 }
             }
-            throw new IOException("Unerwartete erste Nachricht: " + first);
+            throw new IOException("Unexpected first message: " + first);
         } catch (IOException | IllegalArgumentException e) {
             connection.close();
-            throw new IOException("Handshake fehlgeschlagen", e);
+            throw new IOException("Handshake failed", e);
         }
     }
 
@@ -167,7 +167,7 @@ public class PeerManager {
         try {
             onMessageReceived.accept(firstMessage);
         } catch (RuntimeException e) {
-            log.warn("Callback für erste Nachricht von {} fehlgeschlagen", peerId, e);
+            log.warn("Callback for first message from {} failed", peerId, e);
         }
         // Start only after the callback, so no later message can overtake the first one
         listen(peerId, connection);
@@ -192,7 +192,7 @@ public class PeerManager {
             connection.send(message);
         } catch (IOException e) {
             // One dead peer should not stop the broadcast to the remaining peers
-            log.warn("Senden an Peer {} fehlgeschlagen, Peer wird entfernt", peerId, e);
+            log.warn("Sending to peer {} failed, removing peer", peerId, e);
             remove(peerId, connection);
         }
     }
