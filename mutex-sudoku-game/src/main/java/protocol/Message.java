@@ -8,17 +8,14 @@ import game.Difficulty;
  */
 public sealed interface Message {
 
-    // Der Timestamp entscheidet, wer gewinnt, wenn zwei Peers dieselbe Zelle gleichzeitig wollen
-    record LockRequest(String peerId, int row, int col, long timestamp) implements Message {}
-
-    record LockGrant(String peerId, int row, int col) implements Message {}
-
-    record LockRelease(String peerId, int row, int col) implements Message {}
-
-    record MoveResult(String peerId, int row, int col, int value, boolean correct) implements Message {}
-
     record JoinRequest(String peerId) implements Message {}
 
     // Seed und Schwierigkeit reichen, weil der Generator daraus bei jedem Peer dasselbe Board erzeugt
     record JoinAck(String peerId, long seed, Difficulty difficulty) implements Message {}
+
+    // Der Zeitpunkt wird mitgeschickt, damit bei fast gleichzeitigem Fertigwerden entschieden werden kann
+    record PlayerFinished(String peerId, long finishedAtMillis) implements Message {}
+
+    // Keine Zahlen oder Züge, weil jeder auf seinem eigenen Board spielt und die anderen nichts sehen sollen
+    record PlayerLost(String peerId) implements Message {}
 }

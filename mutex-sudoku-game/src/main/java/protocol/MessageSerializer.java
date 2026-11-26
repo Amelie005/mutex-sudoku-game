@@ -39,12 +39,10 @@ public final class MessageSerializer {
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             MessageType type = MessageType.valueOf(obj.get(TYPE_FIELD).getAsString());
             return switch (type) {
-                case LOCK_REQUEST -> GSON.fromJson(obj, Message.LockRequest.class);
-                case LOCK_GRANT -> GSON.fromJson(obj, Message.LockGrant.class);
-                case LOCK_RELEASE -> GSON.fromJson(obj, Message.LockRelease.class);
-                case MOVE_RESULT -> GSON.fromJson(obj, Message.MoveResult.class);
                 case JOIN_REQUEST -> GSON.fromJson(obj, Message.JoinRequest.class);
                 case JOIN_ACK -> GSON.fromJson(obj, Message.JoinAck.class);
+                case PLAYER_FINISHED -> GSON.fromJson(obj, Message.PlayerFinished.class);
+                case PLAYER_LOST -> GSON.fromJson(obj, Message.PlayerLost.class);
             };
         } catch (RuntimeException e) {
             // Die Daten kommen ungeprüft von fremden Peers: Der Aufrufer soll nur einen Fehlerfall abfangen müssen
@@ -55,12 +53,10 @@ public final class MessageSerializer {
     // Ohne default, damit ein neuer Record ohne Eintrag hier gar nicht erst kompiliert
     private static MessageType typeOf(Message message) {
         return switch (message) {
-            case Message.LockRequest m -> MessageType.LOCK_REQUEST;
-            case Message.LockGrant m -> MessageType.LOCK_GRANT;
-            case Message.LockRelease m -> MessageType.LOCK_RELEASE;
-            case Message.MoveResult m -> MessageType.MOVE_RESULT;
             case Message.JoinRequest m -> MessageType.JOIN_REQUEST;
             case Message.JoinAck m -> MessageType.JOIN_ACK;
+            case Message.PlayerFinished m -> MessageType.PLAYER_FINISHED;
+            case Message.PlayerLost m -> MessageType.PLAYER_LOST;
         };
     }
 }

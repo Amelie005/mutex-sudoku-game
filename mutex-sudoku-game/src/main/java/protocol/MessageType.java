@@ -5,10 +5,8 @@ package protocol;
  * Der Name landet als "type"-Feld im JSON, darum ändert Umbenennen das Protokoll zwischen den Peers.
  */
 public enum MessageType {
-    LOCK_REQUEST,
-    LOCK_GRANT,
-    LOCK_RELEASE,
-    MOVE_RESULT,
     JOIN_REQUEST,
-    JOIN_ACK
+    JOIN_ACK,
+    PLAYER_FINISHED,
+    PLAYER_LOST
 }
