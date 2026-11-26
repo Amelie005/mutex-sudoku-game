@@ -45,6 +45,35 @@ final class SudokuSolver {
     }
 
     /**
+     * Checks if the givens of a board contradict eachother in any way.
+     * Empty cells (0) are ignored.
+     * @param g the whole board as an array
+     * @return true if there are conflicts, false otherwise
+     */
+    static boolean hasConflicts(int[] g) {
+        for (int unit = 0; unit < 9; unit++) {
+            boolean[] inRow = new boolean[10];
+            boolean[] inCol = new boolean[10];
+            boolean[] inBlock = new boolean[10];
+            int blockRow = unit / 3 * 3;
+            int blockCol = unit % 3 * 3;
+            for (int i = 0; i < 9; i++) {
+                int rowVal = g[unit * 9 + i];
+                int colVal = g[i * 9 + unit];
+                int blockVal = g[(blockRow + i / 3) * 9 + blockCol + i % 3];
+                if ((rowVal != 0 && inRow[rowVal]) || (colVal != 0 && inCol[colVal])
+                        || (blockVal != 0 && inBlock[blockVal])) {
+                    return true;
+                }
+                inRow[rowVal] = true;
+                inCol[colVal] = true;
+                inBlock[blockVal] = true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Counts solutions and terminates as soon as {@code limit} is reached.
      * @param grid the Sudoku board
      * @param limit the maximum number of solutions to find
