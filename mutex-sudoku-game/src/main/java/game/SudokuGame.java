@@ -5,8 +5,12 @@ import java.util.Arrays;
 /**
  * Represents the sudoku game of one player (numbers, notes, mistakes, status).
  * Each peer gets their own instance.
+ * Thread safe, as network listener threads and the UI thread may use the same instance.
+ * Every public method that reads or changes the mutable state is {@code synchronized} on this instance so
+ * each call is atomic and sees the latest changes of the other threads.
+ * Sequences of several calls is not atomic as a whole but the UI thread is blocked for insignificant times as the sections are small.
  */
-public final class SudokuGame { //TODO: Thread sicherer machen?
+public final class SudokuGame {
 
     public static final int MAX_MISTAKES = 3;
 
@@ -51,7 +55,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param number The number to place (1-9)
      * @return The result of the placement
      */
-    public PlaceResult place(int row, int col, int number) {
+    public synchronized PlaceResult place(int row, int col, int number) {
         if (!canEdit(row, col) || number < 1 || number > 9) {
             return PlaceResult.REJECTED;
         }
@@ -80,7 +84,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param number The number to set or remove (1-9)
      * @return True if the note was successfully set or removed, false otherwise
      */
-    public boolean toggleNote(int row, int col, int number) {
+    public synchronized boolean toggleNote(int row, int col, int number) {
         if (!canEdit(row, col) || number < 1 || number > 9 || values[row * 9 + col] != 0) {
             return false;
         }
@@ -94,7 +98,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param col The column index (0-8)
      * @return True if the field was successfully erased, false otherwise
      */
-    public boolean erase(int row, int col) {
+    public synchronized boolean erase(int row, int col) {
         if (!canEdit(row, col)) {
             return false;
         }
@@ -110,7 +114,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param col The column index (0-8)
      * @return The value at the specified position
      */
-    public int value(int row, int col) {
+    public synchronized int value(int row, int col) {
         return values[row * 9 + col];
     }
 
@@ -130,7 +134,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param col The column index (0-8)
      * @return True if the cell contains a wrong number, false otherwise
      */
-    public boolean isWrong(int row, int col) {
+    public synchronized boolean isWrong(int row, int col) {
         int v = values[row * 9 + col];
         return v != 0 && v != puzzle.getSolution(row, col);
     }
@@ -142,7 +146,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * @param number The number to check (1-9)
      * @return True if the cell has the note, false otherwise
      */
-    public boolean hasNote(int row, int col, int number) {
+    public synchronized boolean hasNote(int row, int col, int number) {
         return notes[row * 9 + col][number];
     }
 
@@ -150,14 +154,14 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * Returns the number of mistakes made by the player.
      * @return The number of mistakes
      */
-    public int mistakes() {
+    public synchronized int mistakes() {
         return mistakes;
     }
 
     /**
      * Returns the status of the players game.
      */
-    public Status status() {
+    public synchronized Status status() {
         return status;
     }
 
@@ -165,7 +169,7 @@ public final class SudokuGame { //TODO: Thread sicherer machen?
      * The amount of correctly filled fields for the implementation of a progress bar.
      * @return amount of correctly filled cells
      */
-    public int correctCount() {
+    public synchronized int correctCount() {
         int n = 0;
         for (int i = 0; i < 81; i++) {
             if (values[i] == puzzle.getSolution(i / 9, i % 9)) {
