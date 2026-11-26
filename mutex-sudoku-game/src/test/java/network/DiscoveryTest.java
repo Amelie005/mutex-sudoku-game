@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 /**
- * Braucht ein aktives Netzwerk, weil Broadcasts nicht über localhost allein laufen.
+ * Needs an active network, because broadcasts do not work over localhost alone.
  */
 @Timeout(10)
 class DiscoveryTest {
@@ -22,7 +22,7 @@ class DiscoveryTest {
 
     @BeforeEach
     void setUp() {
-        // Zufälliger Port, damit ein laufendes Spiel auf dem Standard-Port den Test nicht stört
+        // Random port, so a game running on the default port does not interfere with the test
         discoveryPort = ThreadLocalRandom.current().nextInt(51000, 59000);
         host = new Discovery(discoveryPort);
     }
@@ -41,7 +41,7 @@ class DiscoveryTest {
     void announcedGameIsFoundOnce() throws Exception {
         host.startAnnouncing("host", 4242);
 
-        // Länger als zwei Ankündigungen, damit das Spiel mehrfach ankommt
+        // Longer than two announcements, so the game arrives more than once
         List<Discovery.GameInfo> games = new Discovery(discoveryPort).search(2500);
 
         assertEquals(1, games.size());

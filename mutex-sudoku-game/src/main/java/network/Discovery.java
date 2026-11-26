@@ -17,15 +17,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Findet offene Spiele im lokalen Netz per UDP-Broadcast.
- * So muss niemand IP-Adresse und Port des Hosts von Hand eintippen.
+ * Finds open games in the local network via UDP broadcast.
+ * This way nobody has to type in the host's IP address and port by hand.
  */
 public class Discovery {
 
-    /** Port, auf dem alle Spiele ihre Ankündigungen senden und empfangen. */
+    /** Port on which all games send and receive their announcements. */
     public static final int DEFAULT_PORT = 50505;
 
-    // Erkennungsmerkmal, damit fremde Programme auf demselben Port ignoriert werden
+    // Identifier, so other programs on the same port are ignored
     private static final String GAME_ID = "mutex-sudoku";
     private static final int ANNOUNCE_INTERVAL_MILLIS = 1000;
     private static final int MAX_PACKET_SIZE = 512;
@@ -34,39 +34,39 @@ public class Discovery {
     private static final Gson GSON = new Gson();
 
     /**
-     * Ein gefundenes Spiel.
-     * @param peerId die ID des Hosts
-     * @param address die IP-Adresse des Hosts
-     * @param port der TCP-Port des PeerServers
+     * A game that was found.
+     * @param peerId the ID of the host
+     * @param address the IP address of the host
+     * @param port the TCP port of the PeerServer
      */
     public record GameInfo(String peerId, String address, int port) {}
 
-    // Inhalt eines Broadcast-Pakets, die Adresse kommt aus dem Paket selbst und muss nicht mit
+    // Content of a broadcast packet; the address comes from the packet itself and does not need to be included
     private record Announcement(String game, String peerId, int port) {}
 
     private final int discoveryPort;
     private volatile DatagramSocket announceSocket;
 
     /**
-     * Nutzt den Standard-Port {@link #DEFAULT_PORT}.
+     * Uses the default port {@link #DEFAULT_PORT}.
      */
     public Discovery() {
         this(DEFAULT_PORT);
     }
 
     /**
-     * @param discoveryPort der UDP-Port, muss bei allen Spielern gleich sein
+     * @param discoveryPort the UDP port; must be the same for all players
      */
     public Discovery(int discoveryPort) {
         this.discoveryPort = discoveryPort;
     }
 
     /**
-     * Kündigt das eigene Spiel jede Sekunde im lokalen Netz an.
-     * Ein erneuter Aufruf ersetzt die vorherige Ankündigung.
-     * @param peerId die eigene ID
-     * @param gamePort der Port des eigenen PeerServers
-     * @throws SocketException wenn kein UDP-Socket geöffnet werden kann
+     * Announces our own game in the local network every second.
+     * Calling it again replaces the previous announcement.
+     * @param peerId our own ID
+     * @param gamePort the port of our own PeerServer
+     * @throws SocketException if no UDP socket can be opened
      */
     public synchronized void startAnnouncing(String peerId, int gamePort) throws SocketException {
         stopAnnouncing();
@@ -74,12 +74,12 @@ public class Discovery {
         socket.setBroadcast(true);
         announceSocket = socket;
         byte[] data = GSON.toJson(new Announcement(GAME_ID, peerId, gamePort)).getBytes(StandardCharsets.UTF_8);
-        // Daemon, damit eine laufende Ankündigung das Beenden des Spiels nicht blockiert
+        // Daemon, so a running announcement does not keep the game from shutting down
         Thread.ofPlatform().daemon().name("discovery-announce").start(() -> announceLoop(socket, data));
     }
 
     /**
-     * Beendet die Ankündigung, zum Beispiel sobald das Spiel startet.
+     * Stops the announcement, for example as soon as the game starts.
      */
     public synchronized void stopAnnouncing() {
         if (announceSocket != null) {
@@ -89,17 +89,17 @@ public class Discovery {
     }
 
     /**
-     * Sucht eine Zeit lang nach angekündigten Spielen.
-     * Blockiert so lange, also nicht im UI-Thread aufrufen.
-     * @param timeoutMillis Suchdauer, sollte länger als eine Sekunde sein, damit jeder Host einmal sendet
-     * @return alle gefundenen Spiele, jedes nur einmal
-     * @throws IOException wenn der Discovery-Port nicht geöffnet werden kann
+     * Searches for announced games for a while.
+     * Blocks for that time, so do not call it on the UI thread.
+     * @param timeoutMillis search duration; should be longer than one second so every host sends at least once
+     * @return all games found, each one only once
+     * @throws IOException if the discovery port cannot be opened
      */
     public List<GameInfo> search(int timeoutMillis) throws IOException {
         Set<GameInfo> found = new LinkedHashSet<>();
         long deadline = System.currentTimeMillis() + timeoutMillis;
         try (DatagramSocket socket = new DatagramSocket(null)) {
-            // Erlaubt mehrere Suchende auf einem Rechner, sonst wäre der Port nach dem ersten belegt
+            // Allows several searches on one machine, otherwise the port would be taken after the first one
             socket.setReuseAddress(true);
             socket.bind(new InetSocketAddress(discoveryPort));
             byte[] buffer = new byte[MAX_PACKET_SIZE];
@@ -122,7 +122,7 @@ public class Discovery {
     }
 
     private void announceLoop(DatagramSocket socket, byte[] data) {
-        // An alle Geräte im lokalen Netz, weil der Host die Gäste noch nicht kennt
+        // To all devices in the local network, because the host does not know the guests yet
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 new InetSocketAddress("255.255.255.255", discoveryPort));
         while (!socket.isClosed()) {
@@ -130,7 +130,7 @@ public class Discovery {
                 socket.send(packet);
                 Thread.sleep(ANNOUNCE_INTERVAL_MILLIS);
             } catch (IOException e) {
-                // Kurze WLAN-Aussetzer sollen die Ankündigung nicht dauerhaft beenden
+                // Short Wi-Fi dropouts should not end the announcement for good
                 if (!socket.isClosed()) {
                     log.warn("Ankündigung konnte nicht gesendet werden", e);
                     sleepQuietly();
@@ -146,7 +146,7 @@ public class Discovery {
         String text = new String(packet.getData(), packet.getOffset(), packet.getLength(), StandardCharsets.UTF_8);
         try {
             Announcement a = GSON.fromJson(text, Announcement.class);
-            // Pakete fremder Programme oder mit fehlenden Feldern verwerfen
+            // Drop packets from other programs or with missing fields
             if (a == null || !GAME_ID.equals(a.game()) || a.peerId() == null || a.peerId().isBlank()
                     || a.port() < 1 || a.port() > 65535) {
                 log.debug("Fremdes Paket ignoriert: {}", text);

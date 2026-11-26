@@ -1,8 +1,8 @@
 package protocol;
 
 /**
- * Alle Nachrichtentypen des Protokolls.
- * Der Name landet als "type"-Feld im JSON, darum ändert Umbenennen das Protokoll zwischen den Peers.
+ * All message types of the protocol.
+ * The name ends up as the "type" field in the JSON, so renaming one changes the protocol between peers.
  */
 public enum MessageType {
     JOIN_REQUEST,

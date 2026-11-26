@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Timeout;
 
 import protocol.Message;
 
-// Timeout, damit ein Fehler im Netzwerkcode den Build nicht ewig hängen lässt
+// Timeout, so a bug in the network code cannot make the build hang forever
 @Timeout(10)
 class PeerConnectionTest {
 
@@ -63,7 +63,7 @@ class PeerConnectionTest {
         BlockingQueue<Message> received = new LinkedBlockingQueue<>();
         receiver.startListening(received::add);
 
-        // Direkt auf den Socket schreiben, weil send() nur gültige Nachrichten erzeugen kann
+        // Write directly to the socket, because send() can only produce valid messages
         new PrintWriter(senderSocket.getOutputStream(), true, StandardCharsets.UTF_8).println("kaputt");
         Message message = new Message.PlayerLost("gast");
         sender.send(message);
@@ -87,7 +87,7 @@ class PeerConnectionTest {
         pool.shutdown();
         assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));
 
-        // Vermischte Zeilen wären kein gültiges JSON und kämen hier nicht an
+        // Mixed-up lines would not be valid JSON and would not arrive here
         for (int i = 0; i < 200; i++) {
             assertTrue(received.poll(2, TimeUnit.SECONDS) instanceof Message.JoinRequest);
         }

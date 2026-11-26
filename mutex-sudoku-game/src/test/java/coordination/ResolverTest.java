@@ -33,7 +33,7 @@ class ResolverTest {
     void arrivalOrderCountsNotTimestamp() {
         resolver.handle(new Message.PlayerFinished("anna", 500L));
 
-        // Ben meldet einen früheren Zeitpunkt, kommt aber später an und gewinnt darum nicht
+        // Ben reports an earlier time but arrives later, so he does not win
         assertEquals(Optional.empty(), resolver.handle(new Message.PlayerFinished("ben", 100L)));
     }
 
@@ -105,7 +105,7 @@ class ResolverTest {
         Set<Message.GameOver> results = ConcurrentHashMap.newKeySet();
         CountDownLatch start = new CountDownLatch(1);
 
-        // Alle Spieler gleichzeitig, wie Nachrichten aus verschiedenen Listener-Threads
+        // All players at once, like messages from different listener threads
         ExecutorService pool = Executors.newFixedThreadPool(16);
         for (String id : ids) {
             pool.submit(() -> {

@@ -19,12 +19,12 @@ class MessageSerializerTest {
     static Stream<Message> allMessageTypes() {
         return Stream.of(
                 new Message.JoinRequest("gast-ü"),
-                // Größter long-Wert, weil JSON-Zahlen sonst leicht Genauigkeit verlieren
+                // Largest long value, because JSON numbers can easily lose precision
                 new Message.JoinAck("host", Long.MAX_VALUE, Difficulty.HARD),
                 new Message.PlayerFinished("gast", 1_764_000_000_000L),
                 new Message.PlayerLost("gast"),
                 new Message.GameOver("gast"),
-                // Kein Gewinner, weil alle verloren haben
+                // No winner, because everyone lost
                 new Message.GameOver(null));
     }
 
@@ -38,7 +38,7 @@ class MessageSerializerTest {
     @MethodSource("allMessageTypes")
     void serializedMessageIsOneLineWithType(Message message) {
         String json = MessageSerializer.serialize(message);
-        // Das Netzwerk trennt Nachrichten per Zeilenumbruch, darum darf keiner im JSON stehen
+        // The network separates messages by line breaks, so the JSON must not contain one
         assertFalse(json.contains("\n"));
         assertTrue(json.contains("\"type\":"));
     }

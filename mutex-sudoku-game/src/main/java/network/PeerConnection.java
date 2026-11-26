@@ -17,8 +17,8 @@ import protocol.Message;
 import protocol.MessageSerializer;
 
 /**
- * TCP-Verbindung zu einem einzelnen Peer.
- * Jede Nachricht ist genau eine Zeile JSON, weil TCP selbst keine Nachrichtengrenzen kennt.
+ * TCP connection to a single peer.
+ * Every message is exactly one line of JSON, because TCP itself has no message boundaries.
  */
 public class PeerConnection {
 
@@ -29,38 +29,38 @@ public class PeerConnection {
     private final BufferedWriter writer;
 
     /**
-     * Baut die Streams für einen bereits verbundenen Socket auf.
-     * @param socket der verbundene Socket
-     * @throws IOException wenn die Streams nicht geöffnet werden können
+     * Sets up the streams for an already connected socket.
+     * @param socket the connected socket
+     * @throws IOException if the streams cannot be opened
      */
     public PeerConnection(Socket socket) throws IOException {
         this.socket = socket;
-        // UTF-8 fest vorgeben, sonst hängt die Kodierung vom Betriebssystem des Peers ab
+        // Fixed UTF-8, otherwise the encoding would depend on the peer's operating system
         this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
     }
 
     /**
-     * Schickt eine Nachricht als eine Zeile JSON an den Peer.
-     * @param message die zu sendende Nachricht
-     * @throws IOException wenn die Verbindung unterbrochen ist
+     * Sends a message to the peer as one line of JSON.
+     * @param message the message to send
+     * @throws IOException if the connection is broken
      */
-    // Synchronized, weil sich sonst die Zeilen paralleler Sender vermischen würden
+    // Synchronized, because otherwise the lines of parallel senders would get mixed up
     public synchronized void send(Message message) throws IOException {
         writer.write(MessageSerializer.serialize(message));
-        // Fest \n statt newLine(), damit das Protokoll nicht vom Betriebssystem abhängt
+        // Always \n instead of newLine(), so the protocol does not depend on the operating system
         writer.write('\n');
-        // Ohne flush bliebe die Nachricht im Puffer liegen und käme nie an
+        // Without flush the message would stay in the buffer and never arrive
         writer.flush();
     }
 
     /**
-     * Liest genau eine Nachricht und wartet dabei höchstens bis zum Timeout.
-     * Nur vor startListening aufrufen, sonst nehmen sich beide gegenseitig die Zeilen weg.
-     * @param timeoutMillis maximale Wartezeit in Millisekunden
-     * @return die empfangene Nachricht
-     * @throws IOException wenn nichts ankommt oder die Verbindung endet
-     * @throws IllegalArgumentException wenn die Zeile keine gültige Nachricht ist
+     * Reads exactly one message, waiting at most until the timeout.
+     * Only call this before startListening, otherwise both would take lines away from each other.
+     * @param timeoutMillis maximum waiting time in milliseconds
+     * @return the received message
+     * @throws IOException if nothing arrives or the connection ends
+     * @throws IllegalArgumentException if the line is not a valid message
      */
     public Message receive(int timeoutMillis) throws IOException {
         socket.setSoTimeout(timeoutMillis);
@@ -71,34 +71,34 @@ public class PeerConnection {
             }
             return MessageSerializer.deserialize(line);
         } finally {
-            // Zurücksetzen, sonst würde der Listener bei jeder Spielpause abbrechen
+            // Reset, otherwise the listener would stop during every pause in the game
             socket.setSoTimeout(0);
         }
     }
 
     /**
-     * Startet einen Thread, der eingehende Nachrichten an den Consumer gibt.
-     * @param onMessage bekommt jede empfangene Nachricht
+     * Starts a thread that passes incoming messages to the consumer.
+     * @param onMessage receives every incoming message
      */
     public void startListening(Consumer<Message> onMessage) {
         startListening(onMessage, () -> {});
     }
 
     /**
-     * Startet einen Thread, der eingehende Nachrichten an den Consumer gibt.
-     * @param onMessage bekommt jede empfangene Nachricht
-     * @param onDisconnect wird einmal aufgerufen, sobald die Verbindung beendet ist
+     * Starts a thread that passes incoming messages to the consumer.
+     * @param onMessage receives every incoming message
+     * @param onDisconnect called once as soon as the connection has ended
      */
     public void startListening(Consumer<Message> onMessage, Runnable onDisconnect) {
         Thread listener = new Thread(() -> listen(onMessage, onDisconnect),
                 "peer-listener-" + socket.getRemoteSocketAddress());
-        // Daemon, damit eine offene Verbindung das Beenden des Spiels nicht blockiert
+        // Daemon, so an open connection does not keep the game from shutting down
         listener.setDaemon(true);
         listener.start();
     }
 
     /**
-     * Schließt den Socket. Mehrfaches Aufrufen ist unkritisch.
+     * Closes the socket. Calling it more than once is harmless.
      */
     public void close() {
         try {
@@ -115,12 +115,12 @@ public class PeerConnection {
                 try {
                     onMessage.accept(MessageSerializer.deserialize(line));
                 } catch (RuntimeException e) {
-                    // Eine kaputte Nachricht soll nicht die ganze Verbindung beenden
+                    // One broken message should not end the whole connection
                     log.warn("Nachricht verworfen: {}", line, e);
                 }
             }
         } catch (IOException e) {
-            // Nach unserem eigenen close() ist der Abbruch gewollt und kein Fehler
+            // After our own close() the interruption is intended and not an error
             if (!socket.isClosed()) {
                 log.warn("Verbindung zu {} abgebrochen", socket.getRemoteSocketAddress(), e);
             }

@@ -8,10 +8,10 @@ import java.util.Set;
 import protocol.Message;
 
 /**
- * Entscheidet, wer das Spiel gewinnt.
- * Läuft nur beim Host, weil nur er die Meldungen aller Spieler bekommt.
- * Es gewinnt, wessen PlayerFinished zuerst beim Host ankommt: Die Uhren verschiedener
- * Rechner gehen nicht gleich, die Reihenfolge beim Host ist dagegen eindeutig.
+ * Decides who wins the game.
+ * Runs only on the host, because only the host receives the reports of all players.
+ * Whoever's PlayerFinished reaches the host first wins: the clocks of different
+ * machines are not in sync, but the order of arrival at the host is unambiguous.
  */
 public class Resolver {
 
@@ -20,7 +20,7 @@ public class Resolver {
     private boolean gameOver;
 
     /**
-     * @param playerIds alle Spieler beim Spielstart, der Host selbst eingeschlossen
+     * @param playerIds all players at the start of the game, including the host itself
      */
     public Resolver(Collection<String> playerIds) {
         if (playerIds.isEmpty()) {
@@ -30,12 +30,12 @@ public class Resolver {
     }
 
     /**
-     * Verarbeitet die Meldung eines Spielers, auch die des Hosts selbst.
-     * Andere Nachrichten, unbekannte Spieler und alles nach dem Spielende werden ignoriert.
-     * @param message eine empfangene oder selbst erzeugte Nachricht
-     * @return das Ergebnis zum Verschicken an alle, sobald das Spiel entschieden ist
+     * Processes a player's report, including the host's own.
+     * Other messages, unknown players and anything after the game has ended are ignored.
+     * @param message a received or self-created message
+     * @return the result to send to everyone, as soon as the game is decided
      */
-    // Synchronized, weil Meldungen verschiedener Spieler in verschiedenen Listener-Threads ankommen
+    // Synchronized, because reports from different players arrive in different listener threads
     public synchronized Optional<Message.GameOver> handle(Message message) {
         if (gameOver) {
             return Optional.empty();
@@ -45,7 +45,7 @@ public class Resolver {
                     end(finished.peerId());
             case Message.PlayerLost loser when isStillPlaying(loser.peerId()) -> {
                 lost.add(loser.peerId());
-                // Haben alle verloren, gibt es keinen Gewinner mehr, auf den man warten könnte
+                // If everyone has lost, there is no winner left to wait for
                 yield lost.size() == players.size() ? end(null) : Optional.empty();
             }
             default -> Optional.empty();
@@ -53,13 +53,13 @@ public class Resolver {
     }
 
     /**
-     * @return true, sobald ein Ergebnis feststeht
+     * @return true as soon as a result has been decided
      */
     public synchronized boolean isGameOver() {
         return gameOver;
     }
 
-    // Wer schon verloren hat, darf mit einer späten PlayerFinished nicht noch gewinnen
+    // A player who already lost must not win with a late PlayerFinished
     private boolean isStillPlaying(String peerId) {
         return players.contains(peerId) && !lost.contains(peerId);
     }

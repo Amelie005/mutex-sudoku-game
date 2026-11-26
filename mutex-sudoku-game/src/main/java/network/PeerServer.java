@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Nimmt Verbindungen anderer Peers an und gibt sie an den PeerManager weiter.
+ * Accepts connections from other peers and hands them to the PeerManager.
  */
 public class PeerServer {
 
@@ -18,10 +18,10 @@ public class PeerServer {
     private final PeerManager peerManager;
 
     /**
-     * Belegt den Port, nimmt aber erst nach start() Verbindungen an.
-     * @param port der Port, 0 wählt automatisch einen freien
-     * @param peerManager bekommt alle erfolgreich verbundenen Peers
-     * @throws IOException wenn der Port nicht belegt werden kann
+     * Binds the port, but only accepts connections after start().
+     * @param port the port; 0 picks a free one automatically
+     * @param peerManager receives all successfully connected peers
+     * @throws IOException if the port cannot be bound
      */
     public PeerServer(int port, PeerManager peerManager) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -29,25 +29,25 @@ public class PeerServer {
     }
 
     /**
-     * Startet einen Thread, der eingehende Verbindungen annimmt.
+     * Starts a thread that accepts incoming connections.
      */
     public void start() {
-        // Daemon, damit ein offener Server das Beenden des Spiels nicht blockiert
+        // Daemon, so an open server does not keep the game from shutting down
         Thread.ofPlatform().daemon().name("peer-server-" + getPort()).start(this::acceptLoop);
     }
 
     /**
-     * Gibt den belegten Port zurück.
-     * Nötig, weil bei Port 0 erst das Betriebssystem den Port festlegt.
-     * @return der Port des Servers
+     * Returns the bound port.
+     * Needed because with port 0 the operating system picks the port.
+     * @return the port of the server
      */
     public int getPort() {
         return serverSocket.getLocalPort();
     }
 
     /**
-     * Nimmt keine neuen Verbindungen mehr an.
-     * Bestehende Peers bleiben verbunden, die verwaltet der PeerManager.
+     * Stops accepting new connections.
+     * Existing peers stay connected; the PeerManager manages them.
      */
     public void close() {
         try {
@@ -61,13 +61,13 @@ public class PeerServer {
         try {
             while (true) {
                 Socket socket = serverSocket.accept();
-                // Eigener Thread, weil ein stummer Peer sonst alle anderen bis zum Timeout aussperrt
+                // A separate thread, because a silent peer would otherwise lock out everyone else until the timeout
                 Thread.ofPlatform().daemon()
                         .name("peer-handshake-" + socket.getRemoteSocketAddress())
                         .start(() -> handshake(socket));
             }
         } catch (IOException e) {
-            // Nach unserem eigenen close() ist der Abbruch gewollt und kein Fehler
+            // After our own close() the interruption is intended and not an error
             if (!serverSocket.isClosed()) {
                 log.error("Server nimmt keine Verbindungen mehr an", e);
             }
@@ -84,7 +84,7 @@ public class PeerServer {
         }
     }
 
-    // Der Socket bleibt sonst offen, wenn schon der Konstruktor von PeerConnection scheitert
+    // Otherwise the socket stays open if the PeerConnection constructor already fails
     private void closeQuietly(Socket socket) {
         try {
             socket.close();

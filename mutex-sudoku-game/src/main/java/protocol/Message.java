@@ -3,22 +3,22 @@ package protocol;
 import game.Difficulty;
 
 /**
- * Alle Nachrichten, die Peers austauschen.
- * Sealed, damit der Compiler meldet, wenn ein Switch einen neuen Nachrichtentyp vergisst.
+ * All messages exchanged between peers.
+ * Sealed, so the compiler reports any switch that forgets a new message type.
  */
 public sealed interface Message {
 
     record JoinRequest(String peerId) implements Message {}
 
-    // Seed und Schwierigkeit reichen, weil der Generator daraus bei jedem Peer dasselbe Board erzeugt
+    // Seed and difficulty are enough, because the generator creates the same board from them on every peer
     record JoinAck(String peerId, long seed, Difficulty difficulty) implements Message {}
 
-    // Der Zeitpunkt wird mitgeschickt, damit bei fast gleichzeitigem Fertigwerden entschieden werden kann
+    // The time is sent along so the finish time can be shown or compared later
     record PlayerFinished(String peerId, long finishedAtMillis) implements Message {}
 
-    // Keine Zahlen oder Züge, weil jeder auf seinem eigenen Board spielt und die anderen nichts sehen sollen
+    // No numbers or moves, because everyone plays on their own board and must not see the others' entries
     record PlayerLost(String peerId) implements Message {}
 
-    // Nur der Host verschickt das Ergebnis, damit alle denselben Gewinner anzeigen; null heißt, alle haben verloren
+    // Only the host sends the result, so everyone shows the same winner; null means everyone lost
     record GameOver(String winnerId) implements Message {}
 }

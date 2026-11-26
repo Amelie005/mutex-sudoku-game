@@ -5,22 +5,22 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Wandelt Nachrichten in JSON um und zurück.
- * Das "type"-Feld ist nötig, weil der Empfänger sonst nicht weiß, welcher Record im JSON steckt.
+ * Converts messages to JSON and back.
+ * The "type" field is needed because the receiver would otherwise not know which record the JSON holds.
  */
 public final class MessageSerializer {
 
     private static final String TYPE_FIELD = "type";
 
-    // Gson ist thread-safe, also reicht eine Instanz für alle Verbindungen
+    // Gson is thread-safe, so one instance is enough for all connections
     private static final Gson GSON = new Gson();
 
     private MessageSerializer() {}
 
     /**
-     * Wandelt eine Nachricht in einen einzeiligen JSON-String um.
-     * @param message die zu sendende Nachricht
-     * @return JSON der Nachricht inklusive "type"-Feld
+     * Converts a message into a single-line JSON string.
+     * @param message the message to send
+     * @return JSON of the message including the "type" field
      */
     public static String serialize(Message message) {
         JsonObject json = GSON.toJsonTree(message).getAsJsonObject();
@@ -29,10 +29,10 @@ public final class MessageSerializer {
     }
 
     /**
-     * Baut aus einem JSON-String wieder den passenden Record.
-     * @param json das empfangene JSON
-     * @return die Nachricht als passender Record
-     * @throws IllegalArgumentException wenn das JSON keine gültige Nachricht ist
+     * Turns a JSON string back into the matching record.
+     * @param json the received JSON
+     * @return the message as the matching record
+     * @throws IllegalArgumentException if the JSON is not a valid message
      */
     public static Message deserialize(String json) {
         try {
@@ -46,12 +46,12 @@ public final class MessageSerializer {
                 case GAME_OVER -> GSON.fromJson(obj, Message.GameOver.class);
             };
         } catch (RuntimeException e) {
-            // Die Daten kommen ungeprüft von fremden Peers: Der Aufrufer soll nur einen Fehlerfall abfangen müssen
+            // The data comes unchecked from other peers: the caller should only have to handle one kind of error
             throw new IllegalArgumentException("Ungültige Nachricht: " + json, e);
         }
     }
 
-    // Ohne default, damit ein neuer Record ohne Eintrag hier gar nicht erst kompiliert
+    // No default branch, so a new record without an entry here does not compile
     private static MessageType typeOf(Message message) {
         return switch (message) {
             case Message.JoinRequest m -> MessageType.JOIN_REQUEST;

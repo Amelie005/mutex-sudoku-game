@@ -25,9 +25,9 @@ import game.Difficulty;
 import protocol.Message;
 
 /**
- * Testet PeerManager und PeerServer zusammen über echte Verbindungen auf localhost.
+ * Tests PeerManager and PeerServer together over real connections on localhost.
  */
-// Höher als 5 Sekunden, weil ein Test den Handshake-Timeout abwartet
+// Higher than 5 seconds, because one test waits for the handshake timeout
 @Timeout(15)
 class PeerManagerTest {
 
@@ -40,7 +40,7 @@ class PeerManagerTest {
     @BeforeEach
     void startHost() throws IOException {
         host = new PeerManager();
-        // Antwortet wie der spätere GameController auf jede JoinRequest
+        // Replies to every JoinRequest like the future GameController will
         host.setOnMessageReceived(message -> {
             atHost.add(message);
             if (message instanceof Message.JoinRequest join) {
@@ -113,7 +113,7 @@ class PeerManagerTest {
         try (Socket socket = new Socket(LOCALHOST, server.getPort())) {
             new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8).println("kaputt");
 
-            // -1 heißt: Der Server hat die Verbindung geschlossen
+            // -1 means the server closed the connection
             assertEquals(-1, socket.getInputStream().read());
         }
         assertTrue(host.getConnectedPeerIds().isEmpty());
@@ -128,7 +128,7 @@ class PeerManagerTest {
             guest.connectTo(LOCALHOST, server.getPort(), "gast");
 
             assertTrue(System.currentTimeMillis() - start < 2000);
-            // Nach dem Handshake-Timeout schließt der Server die stumme Verbindung
+            // After the handshake timeout the server closes the silent connection
             assertEquals(-1, silent.getInputStream().read());
         }
     }
@@ -151,7 +151,7 @@ class PeerManagerTest {
         return guest;
     }
 
-    // Abbruch durch Gegenstellen läuft in anderen Threads, darum kurz warten statt sofort prüfen
+    // Disconnects by the other side happen in other threads, so wait briefly instead of checking at once
     private static boolean waitFor(BooleanSupplier condition) throws InterruptedException {
         for (int i = 0; i < 200; i++) {
             if (condition.getAsBoolean()) {

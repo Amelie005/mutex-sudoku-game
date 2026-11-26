@@ -14,28 +14,28 @@ import org.slf4j.LoggerFactory;
 import protocol.Message;
 
 /**
- * Verwaltet die Verbindungen zu allen Peers.
- * So muss die Spiellogik nur Peer-IDs kennen und nichts über Sockets wissen.
+ * Manages the connections to all peers.
+ * This way the game logic only needs to know peer IDs and nothing about sockets.
  */
 public class PeerManager {
 
     private static final Logger log = LoggerFactory.getLogger(PeerManager.class);
 
-    // Begrenzt, damit ein stummer Peer den wartenden Thread nicht dauerhaft blockiert
+    // Limited, so a silent peer cannot block the waiting thread forever
     private static final int HANDSHAKE_TIMEOUT_MILLIS = 5000;
 
-    // Concurrent, weil jeder Listener-Thread beim Verbindungsabbruch die Map ändert
+    // Concurrent, because every listener thread changes the map when its connection drops
     private final ConcurrentHashMap<String, PeerConnection> connections = new ConcurrentHashMap<>();
 
-    // Volatile, weil der Callback aus einem anderen Thread gesetzt wird als die Listener lesen
+    // Volatile, because the callback is set from a different thread than the listeners read it from
     private volatile Consumer<Message> onMessageReceived =
             message -> log.debug("Kein Callback gesetzt, Nachricht verworfen: {}", message);
 
     /**
-     * Registriert einen Peer und beginnt, seine Nachrichten zu empfangen.
-     * Eine bestehende Verbindung mit derselben ID wird ersetzt.
-     * @param peerId die ID des Peers
-     * @param connection die Verbindung zum Peer
+     * Registers a peer and starts receiving its messages.
+     * An existing connection with the same ID is replaced.
+     * @param peerId the ID of the peer
+     * @param connection the connection to the peer
      */
     public void addConnection(String peerId, PeerConnection connection) {
         register(peerId, connection);
@@ -43,12 +43,12 @@ public class PeerManager {
     }
 
     /**
-     * Registriert einen Peer, der sich selbst verbunden hat.
-     * Seine ID steht erst in der ersten Nachricht, darum muss das eine JoinRequest sein.
-     * Blockiert bis zum Handshake-Timeout, also nicht direkt in der Accept-Schleife aufrufen.
-     * @param connection die neue Verbindung
-     * @return die ID des Peers
-     * @throws IOException wenn der Handshake scheitert, die Verbindung ist dann geschlossen
+     * Registers a peer that connected to us.
+     * Its ID is only in the first message, so that message must be a JoinRequest.
+     * Blocks until the handshake timeout, so do not call it directly in the accept loop.
+     * @param connection the new connection
+     * @return the ID of the peer
+     * @throws IOException if the handshake fails; the connection is closed in that case
      */
     public String addIncomingConnection(PeerConnection connection) throws IOException {
         Message.JoinRequest join = readHandshake(connection, Message.JoinRequest.class, Message.JoinRequest::peerId);
@@ -57,14 +57,14 @@ public class PeerManager {
     }
 
     /**
-     * Verbindet sich mit einem anderen Peer und tritt seinem Spiel bei.
-     * Der JoinAck mit Seed und Schwierigkeit kommt wie jede Nachricht über den Callback.
-     * Blockiert bis zu den Timeouts, also nicht im UI-Thread aufrufen.
-     * @param host Adresse des Peers
-     * @param port Port des Peers
-     * @param ownPeerId die eigene ID
-     * @return die ID des anderen Peers
-     * @throws IOException wenn Verbindung oder Handshake scheitern
+     * Connects to another peer and joins its game.
+     * The JoinAck with seed and difficulty arrives through the callback like any other message.
+     * Blocks until the timeouts, so do not call it on the UI thread.
+     * @param host address of the peer
+     * @param port port of the peer
+     * @param ownPeerId our own ID
+     * @return the ID of the other peer
+     * @throws IOException if the connection or the handshake fails
      */
     public String connectTo(String host, int port, String ownPeerId) throws IOException {
         PeerConnection connection = open(host, port);
@@ -80,8 +80,8 @@ public class PeerManager {
     }
 
     /**
-     * Entfernt einen Peer und schließt seine Verbindung.
-     * @param peerId die ID des Peers
+     * Removes a peer and closes its connection.
+     * @param peerId the ID of the peer
      */
     public void removeConnection(String peerId) {
         PeerConnection connection = connections.remove(peerId);
@@ -91,17 +91,17 @@ public class PeerManager {
     }
 
     /**
-     * Schickt eine Nachricht an alle verbundenen Peers.
-     * @param message die zu sendende Nachricht
+     * Sends a message to all connected peers.
+     * @param message the message to send
      */
     public void broadcast(Message message) {
         connections.forEach((peerId, connection) -> send(peerId, connection, message));
     }
 
     /**
-     * Schickt eine Nachricht an einen bestimmten Peer.
-     * @param peerId die ID des Peers
-     * @param message die zu sendende Nachricht
+     * Sends a message to one specific peer.
+     * @param peerId the ID of the peer
+     * @param message the message to send
      */
     public void sendTo(String peerId, Message message) {
         PeerConnection connection = connections.get(peerId);
@@ -113,27 +113,27 @@ public class PeerManager {
     }
 
     /**
-     * Setzt den Callback für eingehende Nachrichten.
-     * Er läuft im Listener-Thread der jeweiligen Verbindung, nicht im UI-Thread.
-     * @param onMessageReceived bekommt jede empfangene Nachricht
+     * Sets the callback for incoming messages.
+     * It runs on the listener thread of the connection, not on the UI thread.
+     * @param onMessageReceived receives every incoming message
      */
     public void setOnMessageReceived(Consumer<Message> onMessageReceived) {
         this.onMessageReceived = onMessageReceived;
     }
 
     /**
-     * Gibt die IDs aller verbundenen Peers zurück.
-     * @return unveränderliche Momentaufnahme der Peer-IDs
+     * Returns the IDs of all connected peers.
+     * @return unmodifiable snapshot of the peer IDs
      */
     public Set<String> getConnectedPeerIds() {
-        // Kopie, weil keySet() direkt auf die Map zeigt und Aufrufer so Peers entfernen könnten
+        // A copy, because keySet() is a live view of the map and callers could remove peers through it
         return Set.copyOf(connections.keySet());
     }
 
     private PeerConnection open(String host, int port) throws IOException {
         Socket socket = new Socket();
         try {
-            // Ohne Timeout hängt connect bei einer unerreichbaren Adresse sehr lange
+            // Without a timeout, connect hangs for a very long time on an unreachable address
             socket.connect(new InetSocketAddress(host, port), HANDSHAKE_TIMEOUT_MILLIS);
             return new PeerConnection(socket);
         } catch (IOException e) {
@@ -149,7 +149,7 @@ public class PeerManager {
             if (type.isInstance(first)) {
                 T message = type.cast(first);
                 String peerId = idOf.apply(message);
-                // Gson füllt fehlende Felder mit null, eine Map verträgt aber keine null-ID
+                // Gson fills missing fields with null, but the map cannot hold a null ID
                 if (peerId != null && !peerId.isBlank()) {
                     return message;
                 }
@@ -162,14 +162,14 @@ public class PeerManager {
     }
 
     private void admit(String peerId, PeerConnection connection, Message firstMessage) {
-        // Vor dem Callback registrieren, damit er per sendTo direkt antworten kann
+        // Register before the callback, so it can reply right away with sendTo
         register(peerId, connection);
         try {
             onMessageReceived.accept(firstMessage);
         } catch (RuntimeException e) {
             log.warn("Callback für erste Nachricht von {} fehlgeschlagen", peerId, e);
         }
-        // Erst nach dem Callback starten, damit keine spätere Nachricht die erste überholt
+        // Start only after the callback, so no later message can overtake the first one
         listen(peerId, connection);
     }
 
@@ -181,7 +181,7 @@ public class PeerManager {
     }
 
     private void listen(String peerId, PeerConnection connection) {
-        // Der Callback wird pro Nachricht gelesen, damit er auch nach addConnection gesetzt werden kann
+        // The callback is read for every message, so it can also be set after addConnection
         connection.startListening(
                 message -> onMessageReceived.accept(message),
                 () -> remove(peerId, connection));
@@ -191,14 +191,14 @@ public class PeerManager {
         try {
             connection.send(message);
         } catch (IOException e) {
-            // Ein toter Peer soll den Broadcast an die übrigen Peers nicht abbrechen
+            // One dead peer should not stop the broadcast to the remaining peers
             log.warn("Senden an Peer {} fehlgeschlagen, Peer wird entfernt", peerId, e);
             remove(peerId, connection);
         }
     }
 
     private void remove(String peerId, PeerConnection connection) {
-        // Nur genau diese Verbindung entfernen, ein Reconnect mit derselben ID soll bestehen bleiben
+        // Only remove exactly this connection, so a reconnect with the same ID stays registered
         connections.remove(peerId, connection);
         connection.close();
     }
